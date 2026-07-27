@@ -8,9 +8,8 @@
  * Este arquivo roda em hypervisor mode e usa apenas os headers locais
  * (shv.h), sem depender de ntifs.h/wdm.h.
  *
- * PENDENTE: para estes handlers rodarem de fato, os bits desses MSRs
- * precisam estar programados na MSR bitmap do VMCS. Hoje a bitmap fica
- * zerada (nenhum MSR gera VM-exit). Ver ShvVmxSetupVmcsForVp em shvvmx.c.
+ * A MSR bitmap e programada em ShvVmxSetupVmcsForVp (shvvmx.c) para
+ * causar VM-exit nos MSRs listados abaixo.
  */
 
 #include "shv.h"

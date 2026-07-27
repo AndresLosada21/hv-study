@@ -56,9 +56,8 @@ MSRs que vazam hypervisor:
 Quando guest tenta ler, devolvemos 0 (não existe VMX).
 Quando guest tenta escrever em MSR sensivel, bloqueia.
 
-**Nota (pendente):** pros handlers de RDMSR/WRMSR rodarem de fato, os bits
-desses MSRs precisam estar programados na MSR bitmap do VMCS. Hoje a bitmap
-fica zerada (nenhum MSR gera VM-exit). Falta programar em `ShvVmxSetupVmcsForVp`.
+A MSR bitmap e programada em `ShvVmxSetupVmcsForVp` (shvvmx.c) para
+causar VM-exit nos MSRs interceptados.
 
 ### 3. Hypervisor signature
 

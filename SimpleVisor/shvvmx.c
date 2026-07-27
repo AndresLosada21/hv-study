@@ -322,8 +322,32 @@ ShvVmxSetupVmcsForVp (
     }
 
     //
-    // Load the MSR bitmap. Unlike other bitmaps, not having an MSR bitmap will
-    // trap all MSRs, so we allocated an empty one.
+    // Program the MSR bitmap to intercept reads/writes to MSRs that reveal
+    // the presence of the hypervisor. Bit = 1 means "cause VM-exit".
+    //
+    // Bitmap layout (Intel SDM, Appendix A):
+    //   Bytes 0-1023:    read bitmap for MSRs 0x00000000-0x00001FFF
+    //   Bytes 1024-2047: read bitmap for MSRs 0xC0000000-0xC0001FFF
+    //   Bytes 2048-3071: write bitmap for MSRs 0x00000000-0x00001FFF
+    //   Bytes 3072-4095: write bitmap for MSRs 0xC0000000-0xC0001FFF
+    //
+    {
+        UINT32 msr;
+
+        // IA32_FEATURE_CONTROL (0x3A): intercept read and write
+        VpData->MsrBitmap[0x3A / 8]        |= (1 << (0x3A % 8));
+        VpData->MsrBitmap[2048 + 0x3A / 8] |= (1 << (0x3A % 8));
+
+        // VMX MSRs (0x480-0x491): intercept read and write
+        for (msr = 0x480; msr <= 0x491; msr++)
+        {
+            VpData->MsrBitmap[msr / 8]        |= (1 << (msr % 8));
+            VpData->MsrBitmap[2048 + msr / 8] |= (1 << (msr % 8));
+        }
+    }
+
+    //
+    // Load the MSR bitmap into the VMCS.
     //
     __vmx_vmwrite(MSR_BITMAP, VpData->MsrBitmapPhysicalAddress);
 
