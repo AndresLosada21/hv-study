@@ -18,10 +18,23 @@ jobs:
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v2
 
+    - name: Install Windows SDK 10.0.22621
+      shell: pwsh
+      run: |
+        # SDK 10.0.22621 (parte um/ucrt/shared + registro do Windows Kits).
+        # Sem ele, o MSBuild falha com MSB8036 ("Windows SDK version not found").
+        $sdkUrl = "https://go.microsoft.com/fwlink/?linkid=2311806"
+        $sdkInstaller = "$env:TEMP\winsdksetup.exe"
+        Write-Host "Downloading Windows SDK 10.0.22621..."
+        Invoke-WebRequest -Uri $sdkUrl -OutFile $sdkInstaller -UseBasicParsing
+        Write-Host "Installing Windows SDK (silent)..."
+        Start-Process -FilePath $sdkInstaller -ArgumentList "/quiet /norestart" -Wait
+        Write-Host "Windows SDK installed."
+
     - name: Install WDK
       shell: pwsh
       run: |
-        # Download WDK 10 (22H2) directly from Microsoft
+        # WDK 10.0.22621 (22H2): headers/libs de kernel (km\ntifs.h etc.)
         $wdkUrl = "https://go.microsoft.com/fwlink/?linkid=2196230"
         $wdkInstaller = "$env:TEMP\wdksetup.exe"
         Write-Host "Downloading WDK..."
