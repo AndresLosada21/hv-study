@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="NT|x64">
+      <Configuration>NT</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="UEFI|x64">
+      <Configuration>UEFI</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{4C048BB2-7E8D-43BF-B29D-942461275023}</ProjectGuid>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="$(Configuration)\$(Configuration).default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)'=='UEFI'">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <Import Project="$(Configuration)\$(Configuration).props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)'=='UEFI'">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+  <PropertyGroup>
+    <IncludePath>$(IncludePath);$(VC_IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemGroup>
+    <ClCompile Include="shv.c" />
+    <ClCompile Include="shvutil.c" />
+    <ClCompile Include="shvvmx.c" />
+    <ClCompile Include="shvvmxhv.c" />
+    <ClCompile Include="shvvp.c" />
+    <ClCompile Include="shvstealth.c" />
+    <ClCompile Include="$(Configuration)\shvos.c"/>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="shv.h" />
+    <ClInclude Include="ntint.h" />
+    <ClInclude Include="shv_x.h" />
+    <ClInclude Include="vmx.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="shvvmxhvx64.asm" />
+    <MASM Include="$(Configuration)\shvosx64.asm"/>
+  </ItemGroup>
+</Project>
