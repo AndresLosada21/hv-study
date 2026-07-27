@@ -29,6 +29,8 @@ Environment:
 #endif
 #define _INC_MALLOC
 #include <intrin.h>
+#include <ntifs.h>
+#include <ntstrsafe.h>
 #include "ntint.h"
 #include "shv_x.h"
 

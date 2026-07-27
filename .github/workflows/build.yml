@@ -35,6 +35,23 @@ jobs:
     - name: Build (Windows NT x64)
       shell: pwsh
       run: |
+        # Set INCLUDE and LIB paths for WDK (find latest version)
+        $wdkRoot = "C:\Program Files (x86)\Windows Kits\10"
+        $wdkVer = Get-ChildItem "$wdkRoot\Include" -Directory | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty Name
+        if ($wdkVer) {
+          $includePaths = @(
+            "$wdkRoot\Include\$wdkVer\km",
+            "$wdkRoot\Include\$wdkVer\km\crt",
+            "$wdkRoot\Include\$wdkVer\shared",
+            "$wdkRoot\Include\$wdkVer\ucrt",
+            "$wdkRoot\Include\$wdkVer\um",
+            "$wdkRoot\Include\$wdkVer\winrt"
+          ) -join ";"
+          $env:INCLUDE = $includePaths + ";" + $env:INCLUDE
+          $env:LIB = "$wdkRoot\Lib\$wdkVer\km\x64;$wdkRoot\Lib\$wdkVer\ucrt\x64;" + $env:LIB
+          Write-Host "WDK version: $wdkVer"
+          Write-Host "INCLUDE set to: $includePaths"
+        }
         cd SimpleVisor
         msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /m /verbosity:minimal
 
