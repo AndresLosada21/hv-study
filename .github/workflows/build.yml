@@ -35,13 +35,15 @@ jobs:
     - name: Build (Windows NT x64)
       shell: pwsh
       run: |
-        # Set INCLUDE and LIB paths for WDK (find latest version)
+        # Set INCLUDE and LIB paths for WDK (find latest version with km folder)
         $wdkRoot = "C:\Program Files (x86)\Windows Kits\10"
-        $wdkVer = Get-ChildItem "$wdkRoot\Include" -Directory | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty Name
+        $wdkVer = Get-ChildItem "$wdkRoot\Include" -Directory |
+          Where-Object { Test-Path "$wdkRoot\Include\$($_.Name)\km\ntifs.h" } |
+          Sort-Object Name -Descending |
+          Select-Object -First 1 -ExpandProperty Name
         if ($wdkVer) {
           $includePaths = @(
             "$wdkRoot\Include\$wdkVer\km",
-            "$wdkRoot\Include\$wdkVer\km\crt",
             "$wdkRoot\Include\$wdkVer\shared",
             "$wdkRoot\Include\$wdkVer\ucrt",
             "$wdkRoot\Include\$wdkVer\um",
@@ -51,6 +53,9 @@ jobs:
           $env:LIB = "$wdkRoot\Lib\$wdkVer\km\x64;$wdkRoot\Lib\$wdkVer\ucrt\x64;" + $env:LIB
           Write-Host "WDK version: $wdkVer"
           Write-Host "INCLUDE set to: $includePaths"
+        } else {
+          Write-Host "ERROR: WDK not found"
+          exit 1
         }
         cd SimpleVisor
         msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /m /verbosity:minimal
