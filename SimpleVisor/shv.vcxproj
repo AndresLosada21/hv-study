@@ -35,7 +35,7 @@
     <ClCompile Include="shvvmx.c" />
     <ClCompile Include="shvvmxhv.c" />
     <ClCompile Include="shvvp.c" />
-    <ClCompile Include="shvstealth.c" />
+    <ClCompile Include="shvstealth.c" Condition="'$(Configuration)'=='NT'" />
     <ClCompile Include="$(Configuration)\shvos.c"/>
   </ItemGroup>
   <ItemGroup>

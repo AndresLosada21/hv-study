@@ -35,30 +35,13 @@ jobs:
     - name: Build (Windows NT x64)
       shell: pwsh
       run: |
-        # Set INCLUDE and LIB paths for WDK (find latest version with km folder)
-        $wdkRoot = "C:\Program Files (x86)\Windows Kits\10"
-        $wdkVer = Get-ChildItem "$wdkRoot\Include" -Directory |
-          Where-Object { Test-Path "$wdkRoot\Include\$($_.Name)\km\ntifs.h" } |
-          Sort-Object Name -Descending |
-          Select-Object -First 1 -ExpandProperty Name
-        if ($wdkVer) {
-          $includePaths = @(
-            "$wdkRoot\Include\$wdkVer\km",
-            "$wdkRoot\Include\$wdkVer\shared",
-            "$wdkRoot\Include\$wdkVer\ucrt",
-            "$wdkRoot\Include\$wdkVer\um",
-            "$wdkRoot\Include\$wdkVer\winrt"
-          ) -join ";"
-          $env:INCLUDE = $includePaths + ";" + $env:INCLUDE
-          $env:LIB = "$wdkRoot\Lib\$wdkVer\km\x64;$wdkRoot\Lib\$wdkVer\ucrt\x64;" + $env:LIB
-          Write-Host "WDK version: $wdkVer"
-          Write-Host "INCLUDE set to: $includePaths"
-        } else {
-          Write-Host "ERROR: WDK not found"
-          exit 1
-        }
+        # Pin do WindowsTargetPlatformVersion na versao do WDK instalado.
+        # Sem isso, o projeto usa $(LatestTargetPlatformVersion), que resolve
+        # para o SDK mais novo do runner (sem headers km\ como ntifs.h).
+        # Com o pin, os props do toolset WindowsKernelModeDriver10.0 montam
+        # IncludePath/LibraryPath corretamente (nao precisa hack de INCLUDE).
         cd SimpleVisor
-        msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /m /verbosity:minimal
+        msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /p:WindowsTargetPlatformVersion=10.0.22621.0 /m /verbosity:minimal
 
     - name: Upload Driver Artifact
       uses: actions/upload-artifact@v4

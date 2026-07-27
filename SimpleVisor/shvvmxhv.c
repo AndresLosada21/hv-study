@@ -210,7 +210,7 @@ ShvVmxHandleExit (
     case EXIT_REASON_XSETBV:
         ShvVmxHandleXsetbv(VpState);
         break;
-    case EXIT_REASON_RDMSR:
+    case EXIT_REASON_MSR_READ:
         // STEALTH: Guest tentando ler MSR. Se for sensivel, devolve limpo.
         {
             UINT32 msr = (UINT32)VpState->VpRegs->Rcx;
@@ -227,7 +227,7 @@ ShvVmxHandleExit (
             }
         }
         break;
-    case EXIT_REASON_WRMSR:
+    case EXIT_REASON_MSR_WRITE:
         // STEALTH: Guest tentando escrever MSR. Se for sensivel, bloqueia.
         {
             UINT32 msr = (UINT32)VpState->VpRegs->Rcx;

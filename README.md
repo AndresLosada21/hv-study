@@ -56,6 +56,10 @@ MSRs que vazam hypervisor:
 Quando guest tenta ler, devolvemos 0 (não existe VMX).
 Quando guest tenta escrever em MSR sensivel, bloqueia.
 
+**Nota (pendente):** pros handlers de RDMSR/WRMSR rodarem de fato, os bits
+desses MSRs precisam estar programados na MSR bitmap do VMCS. Hoje a bitmap
+fica zerada (nenhum MSR gera VM-exit). Falta programar em `ShvVmxSetupVmcsForVp`.
+
 ### 3. Hypervisor signature
 
 Leaf `0x40000000` da CPUID normalmente retorna signature do hypervisor
@@ -86,7 +90,7 @@ Reinicia a VM.
 
 ```cmd
 cd C:\hypervisor-study\SimpleVisor
-msbuild shv.sln /p:Configuration=NT /p:Platform=x64
+msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /p:WindowsTargetPlatformVersion=10.0.22621.0
 ```
 
 Gera `x64\NT Release\shv.sys`.

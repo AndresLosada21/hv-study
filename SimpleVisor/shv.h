@@ -29,8 +29,6 @@ Environment:
 #endif
 #define _INC_MALLOC
 #include <intrin.h>
-#include <ntifs.h>
-#include <ntstrsafe.h>
 #include "ntint.h"
 #include "shv_x.h"
 
@@ -183,10 +181,11 @@ ShvOsRunCallbackOnProcessors (
     );
 
 //
-// Stealth / Anti-detection (modificacao para esconder hypervisor)
+// Stealth (shvstealth.c)
+// Usa apenas tipos portaveis (basetsd.h): este header e compartilhado
+// com o nucleo do hypervisor, que nao inclui headers do WDK.
 //
-
-NTSTATUS
+INT32
 ShvStealthInitialize (
     VOID
     );
@@ -198,16 +197,16 @@ ShvStealthCleanup (
 
 VOID
 ShvStealthSetEnabled (
-    _In_ BOOLEAN Enabled
+    _In_ UINT8 Enabled
     );
 
-BOOLEAN
+UINT8
 ShvStealthHandleRdmsr (
     _In_ UINT32 Msr,
     _Out_ PUINT64 Value
     );
 
-BOOLEAN
+UINT8
 ShvStealthHandleWrmsr (
     _In_ UINT32 Msr
     );
