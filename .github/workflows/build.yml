@@ -54,7 +54,7 @@ jobs:
         # Com o pin, os props do toolset WindowsKernelModeDriver10.0 montam
         # IncludePath/LibraryPath corretamente (nao precisa hack de INCLUDE).
         cd SimpleVisor
-        msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /p:WindowsTargetPlatformVersion=10.0.28000.0 /m /verbosity:minimal
+        msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /p:WindowsTargetPlatformVersion=10.0.28000.0 /p:SignMode=Off /m /verbosity:minimal
 
     - name: Upload Driver Artifact
       uses: actions/upload-artifact@v4
