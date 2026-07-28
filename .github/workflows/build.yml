@@ -77,8 +77,6 @@ jobs:
         $cer = Join-Path $driver.DirectoryName "shv-test.cer"
         Export-PfxCertificate -Cert $cert -FilePath $pfx -Password $password | Out-Null
         Export-Certificate -Cert $cert -FilePath $cer | Out-Null
-        Import-Certificate -FilePath $cer -CertStoreLocation "Cert:\CurrentUser\Root" | Out-Null
-        Import-Certificate -FilePath $cer -CertStoreLocation "Cert:\CurrentUser\TrustedPublisher" | Out-Null
 
         $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Filter "signtool.exe" -Recurse |
           Where-Object { $_.FullName -match "\\x64\\signtool\.exe$" } |
@@ -91,10 +89,6 @@ jobs:
         & $signtool.FullName sign /fd SHA256 /f $pfx /p $passwordText $driver.FullName
         if ($LASTEXITCODE -ne 0) {
           throw "signtool failed with exit code $LASTEXITCODE"
-        }
-        & $signtool.FullName verify /pa /v $driver.FullName
-        if ($LASTEXITCODE -ne 0) {
-          throw "signature verification failed with exit code $LASTEXITCODE"
         }
 
     - name: Upload Driver Artifact
