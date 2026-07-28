@@ -545,7 +545,7 @@ ShvVmxSetupVmcsForVp (
     __vmx_vmwrite(HOST_RIP, (uintptr_t)ShvVmxEntry);
 }
 
-UINT8
+INT32
 ShvVmxProbe (
     VOID
     )
@@ -559,7 +559,7 @@ ShvVmxProbe (
     __cpuid(cpu_info, 1);
     if ((cpu_info[2] & 0x20) == FALSE)
     {
-        return FALSE;
+        return SHV_STATUS_NOT_AVAILABLE;
     }
 
     //
@@ -582,13 +582,13 @@ ShvVmxProbe (
     //
     if (!(featureControl & IA32_FEATURE_CONTROL_MSR_ENABLE_VMXON_OUTSIDE_SMX))
     {
-        return FALSE;
+        return SHV_STATUS_FEATURE_CONTROL_DISABLED;
     }
 
     //
     // Both the hardware and the firmware are allowing us to enter VMX mode.
     //
-    return TRUE;
+    return SHV_STATUS_SUCCESS;
 }
 
 INT32

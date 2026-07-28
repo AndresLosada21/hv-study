@@ -235,9 +235,9 @@ ShvVpLoadCallback (
     // Detect if the hardware appears to support VMX root mode to start.
     // No attempts are made to enable this if it is lacking or disabled.
     //
-    if (!ShvVmxProbe())
+    status = ShvVmxProbe();
+    if (status != SHV_STATUS_SUCCESS)
     {
-        status = SHV_STATUS_NOT_AVAILABLE;
         goto Failure;
     }
 

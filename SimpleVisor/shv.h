@@ -92,7 +92,7 @@ ShvVmxLaunch (
     VOID
     );
 
-UINT8
+INT32
 ShvVmxProbe (
     VOID
     );
