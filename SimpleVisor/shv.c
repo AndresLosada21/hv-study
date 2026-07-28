@@ -87,10 +87,7 @@ ShvLoad (
 
         // A different processor may already be virtualized. Tear it down
         // before DriverEntry returns and Windows unloads this image.
-        if (callbackContext.InitCount != 0)
-        {
-            ShvOsRunCallbackOnProcessors(ShvVpUnloadCallback, NULL);
-        }
+        ShvOsRunCallbackOnProcessors(ShvVpUnloadCallback, NULL);
         ShvStealthCleanup();
         return callbackContext.FailureStatus;
     }

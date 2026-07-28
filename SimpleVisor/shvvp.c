@@ -271,19 +271,6 @@ ShvVpLoadCallback (
     }
 
     //
-    // Our hypervisor should now be seen as present on this LP, as the SHV
-    // correctly handles CPUID ECX features register.
-    //
-    if (ShvIsOurHypervisorPresent() == FALSE)
-    {
-        //
-        // Free the per-processor data
-        //
-        status = SHV_STATUS_NOT_PRESENT;
-        goto Failure;
-    }
-
-    //
     // This CPU is hyperjacked!
     //
     _InterlockedIncrement((volatile long*)&Context->InitCount);
