@@ -114,7 +114,7 @@ ShvVpInitialize (
     _In_ PSHV_VP_DATA Data
     )
 {
-    INT32 status;
+    INT32 status = SHV_STATUS_SUCCESS;
 
     //
     // Prepare any OS-specific CPU data
