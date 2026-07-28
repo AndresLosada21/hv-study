@@ -56,6 +56,45 @@ jobs:
         cd SimpleVisor
         msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /p:WindowsTargetPlatformVersion=10.0.28000.0 /p:SignMode=Off /m /verbosity:minimal
 
+    - name: Test-sign driver
+      shell: pwsh
+      run: |
+        $driver = Get-ChildItem "SimpleVisor\x64" -Filter "shv.sys" -Recurse | Select-Object -First 1
+        if (-not $driver) {
+          throw "shv.sys not found"
+        }
+
+        $cert = New-SelfSignedCertificate `
+          -Type CodeSigningCert `
+          -Subject "CN=SimpleVisor Test Certificate" `
+          -CertStoreLocation "Cert:\CurrentUser\My" `
+          -HashAlgorithm SHA256 `
+          -KeyExportPolicy Exportable
+
+        $passwordText = [Guid]::NewGuid().ToString("N")
+        $password = ConvertTo-SecureString $passwordText -AsPlainText -Force
+        $pfx = Join-Path $env:TEMP "shv-test.pfx"
+        $cer = Join-Path $driver.DirectoryName "shv-test.cer"
+        Export-PfxCertificate -Cert $cert -FilePath $pfx -Password $password | Out-Null
+        Export-Certificate -Cert $cert -FilePath $cer | Out-Null
+
+        $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Filter "signtool.exe" -Recurse |
+          Where-Object { $_.FullName -match "\\x64\\signtool\.exe$" } |
+          Sort-Object FullName -Descending |
+          Select-Object -First 1
+        if (-not $signtool) {
+          throw "signtool.exe not found"
+        }
+
+        & $signtool.FullName sign /fd SHA256 /f $pfx /p $passwordText $driver.FullName
+        if ($LASTEXITCODE -ne 0) {
+          throw "signtool failed with exit code $LASTEXITCODE"
+        }
+        & $signtool.FullName verify /pa /v $driver.FullName
+        if ($LASTEXITCODE -ne 0) {
+          throw "signature verification failed with exit code $LASTEXITCODE"
+        }
+
     - name: Upload Driver Artifact
       uses: actions/upload-artifact@v4
       with:
@@ -63,6 +102,7 @@ jobs:
         path: |
           SimpleVisor/x64/**/*.sys
           SimpleVisor/x64/**/*.pdb
+          SimpleVisor/x64/**/*.cer
         if-no-files-found: warn
 
     - name: Upload Build Logs
