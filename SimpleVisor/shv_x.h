@@ -29,6 +29,7 @@ Environment:
 #define SHV_STATUS_NOT_AVAILABLE    -1
 #define SHV_STATUS_NO_RESOURCES     -2
 #define SHV_STATUS_NOT_PRESENT      -3
+#define SHV_STATUS_VMXON_FAILED     -4
 
 #define _1GB                        (1 * 1024 * 1024 * 1024)
 #define _2MB                        (2 * 1024 * 1024)

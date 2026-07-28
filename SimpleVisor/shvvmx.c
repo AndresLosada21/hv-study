@@ -625,7 +625,7 @@ ShvVmxLaunchOnVp (
         //
         // We could not enter VMX Root mode
         //
-        return SHV_STATUS_NOT_AVAILABLE;
+        return SHV_STATUS_VMXON_FAILED;
     }
 
     //
