@@ -84,6 +84,14 @@ ShvLoad (
     {
         ShvOsDebugPrint("The SHV failed to initialize (0x%lX) Failed CPU: %d\n",
                         callbackContext.FailureStatus, callbackContext.FailedCpu);
+
+        // A different processor may already be virtualized. Tear it down
+        // before DriverEntry returns and Windows unloads this image.
+        if (callbackContext.InitCount != 0)
+        {
+            ShvOsRunCallbackOnProcessors(ShvVpUnloadCallback, NULL);
+        }
+        ShvStealthCleanup();
         return callbackContext.FailureStatus;
     }
 
