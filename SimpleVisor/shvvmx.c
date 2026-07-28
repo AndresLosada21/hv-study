@@ -563,14 +563,17 @@ ShvVmxProbe (
     }
 
     //
-    // Check if the Feature Control MSR is locked. If it isn't, this means that
-    // BIOS/UEFI firmware screwed up, and we could go around locking it, but
-    // we'd rather not mess with it.
+    // Check if the Feature Control MSR is locked. Virtual firmware may leave
+    // it unlocked even when nested VMX is exposed. In that case initialize it
+    // exactly as firmware would: enable VMXON outside SMX and lock the value.
     //
     featureControl = __readmsr(IA32_FEATURE_CONTROL_MSR);
     if (!(featureControl & IA32_FEATURE_CONTROL_MSR_LOCK))
     {
-        return FALSE;
+        featureControl |= IA32_FEATURE_CONTROL_MSR_LOCK |
+                          IA32_FEATURE_CONTROL_MSR_ENABLE_VMXON_OUTSIDE_SMX;
+        __writemsr(IA32_FEATURE_CONTROL_MSR, featureControl);
+        featureControl = __readmsr(IA32_FEATURE_CONTROL_MSR);
     }
 
     //
