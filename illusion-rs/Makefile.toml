@@ -1,0 +1,29 @@
+# General environment settings for the workspace.
+# Ensures tasks defined in the root Makefile are available to all workspace members.
+[env]
+CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+
+[tasks.format]
+command = "cargo"
+args = ["fmt"]
+
+[tasks.build-debug]
+dependencies = ["format"]
+command = "cargo"
+args = ["build", "--profile", "dev"]
+
+[tasks.build-release]
+dependencies = ["format"]
+command = "cargo"
+args = ["build", "--profile", "release"]
+
+[tasks.run-debug]
+command = "cargo"
+args = ["run", "--profile", "dev", "--package", "xtask"]
+
+[tasks.run-release]
+command = "cargo"
+args = ["run", "--profile", "release", "--package", "xtask"]
+
+[tasks.default]
+dependencies = ["build-debug", "build-release"]

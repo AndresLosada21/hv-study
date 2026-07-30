@@ -27,3 +27,7 @@ Desktop.ini
 # Temp
 *.tmp
 *.log
+
+# Illusion-rs
+illusion-rs/.idea/
+illusion-rs/target/

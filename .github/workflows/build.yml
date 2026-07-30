@@ -1,4 +1,4 @@
-name: Build Driver
+name: Build Illusion Hypervisor
 
 on:
   push:
@@ -7,104 +7,59 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
 
-    - name: Install Windows SDK 10.0.28000
-      shell: pwsh
-      run: |
-        # SDK 10.0.28000 (para VS 2026 / MSBuild v18)
-        # https://learn.microsoft.com/en-us/windows-hardware/drivers/download-the-wdk
-        $sdkUrl = "https://go.microsoft.com/fwlink/?linkid=2372508"
-        $sdkInstaller = "$env:TEMP\winsdksetup.exe"
-        Write-Host "Downloading Windows SDK 10.0.28000..."
-        Invoke-WebRequest -Uri $sdkUrl -OutFile $sdkInstaller -UseBasicParsing
-        Write-Host "Installing Windows SDK (silent)..."
-        Start-Process -FilePath $sdkInstaller -ArgumentList "/quiet /norestart" -Wait
-        Write-Host "Windows SDK installed."
+      - name: Install Rust nightly + UEFI target
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          toolchain: nightly
+          targets: x86_64-unknown-uefi
 
-    - name: Install WDK 28000
-      shell: pwsh
-      run: |
-        # WDK para VS 2026 (build 28000) - tem Microsoft.DriverKit.Build.Tasks.18.0.dll
-        $wdkUrl = "https://go.microsoft.com/fwlink/?LinkId=2371554"
-        $wdkInstaller = "$env:TEMP\wdksetup.exe"
-        Write-Host "Downloading WDK..."
-        Invoke-WebRequest -Uri $wdkUrl -OutFile $wdkInstaller -UseBasicParsing
-        Write-Host "Installing WDK (silent)..."
-        Start-Process -FilePath $wdkInstaller -ArgumentList "/quiet /norestart" -Wait
-        Write-Host "WDK installed."
-        # Refresh PATH
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
+      - name: Cache cargo (illusion-rs)
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: illusion-rs -> target
 
-    - name: Build (Windows NT x64)
-      shell: pwsh
-      run: |
-        # Pin do WindowsTargetPlatformVersion na versao do WDK instalado.
-        # Sem isso, o projeto usa $(LatestTargetPlatformVersion), que resolve
-        # para o SDK mais novo do runner (sem headers km\ como ntifs.h).
-        # Com o pin, os props do toolset WindowsKernelModeDriver10.0 montam
-        # IncludePath/LibraryPath corretamente (nao precisa hack de INCLUDE).
-        cd SimpleVisor
-        msbuild shv.sln /p:Configuration="Windows NT" /p:Platform=x64 /p:WindowsTargetPlatformVersion=10.0.28000.0 /p:SignMode=Off /m /verbosity:minimal
+      - name: Build UEFI (illusion + loader)
+        shell: pwsh
+        run: |
+          cd illusion-rs
+          cargo build --release --target x86_64-unknown-uefi -p illusion -p loader
 
-    - name: Test-sign driver
-      shell: pwsh
-      run: |
-        $driver = Get-ChildItem "SimpleVisor\x64" -Filter "shv.sys" -Recurse | Select-Object -First 1
-        if (-not $driver) {
-          throw "shv.sys not found"
-        }
+      - name: Build Windows (client + xtask)
+        shell: pwsh
+        run: |
+          cd illusion-rs
+          cargo build --release --target x86_64-pc-windows-msvc -p client -p xtask
 
-        $cert = New-SelfSignedCertificate `
-          -Type CodeSigningCert `
-          -Subject "CN=SimpleVisor Test Certificate" `
-          -CertStoreLocation "Cert:\CurrentUser\My" `
-          -HashAlgorithm SHA256 `
-          -KeyExportPolicy Exportable
+      - name: Upload Release Artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: illusion-rs-release
+          path: |
+            illusion-rs/target/x86_64-unknown-uefi/release/illusion.efi
+            illusion-rs/target/x86_64-unknown-uefi/release/loader.efi
+            illusion-rs/target/x86_64-pc-windows-msvc/release/client.exe
+            illusion-rs/target/x86_64-pc-windows-msvc/release/xtask.exe
+          if-no-files-found: error
 
-        $passwordText = [Guid]::NewGuid().ToString("N")
-        $password = ConvertTo-SecureString $passwordText -AsPlainText -Force
-        $pfx = Join-Path $env:TEMP "shv-test.pfx"
-        $cer = Join-Path $driver.DirectoryName "shv-test.cer"
-        Export-PfxCertificate -Cert $cert -FilePath $pfx -Password $password | Out-Null
-        Export-Certificate -Cert $cert -FilePath $cer | Out-Null
-
-        $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin" -Filter "signtool.exe" -Recurse |
-          Where-Object { $_.FullName -match "\\x64\\signtool\.exe$" } |
-          Sort-Object FullName -Descending |
-          Select-Object -First 1
-        if (-not $signtool) {
-          throw "signtool.exe not found"
-        }
-
-        & $signtool.FullName sign /fd SHA256 /f $pfx /p $passwordText $driver.FullName
-        if ($LASTEXITCODE -ne 0) {
-          throw "signtool failed with exit code $LASTEXITCODE"
-        }
-
-    - name: Upload Driver Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: shv-driver
-        path: |
-          SimpleVisor/x64/**/*.sys
-          SimpleVisor/x64/**/*.pdb
-          SimpleVisor/x64/**/*.cer
-        if-no-files-found: warn
-
-    - name: Upload Build Logs
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-logs
-        path: SimpleVisor/x64/**/*.log
-        if-no-files-found: ignore
+      - name: Upload Build Logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: illusion-rs-build-logs
+          path: illusion-rs/target/**/*.log
+          if-no-files-found: ignore
