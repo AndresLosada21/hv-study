@@ -25,10 +25,16 @@ pub mod virtualize;
 
 /// Custom panic handler for the UEFI application.
 ///
+/// Disabled in our fork because `uefi 0.30.0` (with `alloc`) already provides a
+/// `panic_impl` lang item, and providing a second one causes E0152. Re-enable
+/// by removing the `#[cfg(any())]` attribute below once upstream resolves the
+/// conflict.
+///
 /// # Arguments
 ///
 /// * `info` - Information about the panic, including the location and optional message.
 #[cfg(not(test))]
+#[cfg(any())]
 #[panic_handler]
 fn panic_handler(info: &core::panic::PanicInfo) -> ! {
     // Log the file, line, and column of the panic.
