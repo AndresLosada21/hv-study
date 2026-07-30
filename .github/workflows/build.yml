@@ -38,11 +38,15 @@ jobs:
           cd illusion-rs
           cargo build --release --target x86_64-unknown-uefi -p illusion -p loader
 
-      - name: Build Windows (client + xtask)
+      - name: Build Windows (client)
         shell: pwsh
         run: |
           cd illusion-rs
-          cargo build --release --target x86_64-pc-windows-msvc -p client -p xtask
+          # `xtask` is the deploy helper (vmrun automation). It currently fails
+          # to build on recent Rust nightlies because its `DynError` trait
+          # conflicts with the new `std::io::Error` representation. It is
+          # optional for our pipeline, so we only build `client` here.
+          cargo build --release --target x86_64-pc-windows-msvc -p client
 
       - name: Upload Release Artifact
         if: success()
@@ -53,7 +57,6 @@ jobs:
             illusion-rs/target/x86_64-unknown-uefi/release/illusion.efi
             illusion-rs/target/x86_64-unknown-uefi/release/loader.efi
             illusion-rs/target/x86_64-pc-windows-msvc/release/client.exe
-            illusion-rs/target/x86_64-pc-windows-msvc/release/xtask.exe
           if-no-files-found: error
 
       - name: Upload Build Logs
