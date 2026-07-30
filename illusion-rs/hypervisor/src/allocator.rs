@@ -15,12 +15,25 @@ use {
 };
 
 /// Global allocator instance with a heap size of `HEAP_SIZE`.
+///
+/// **Disabled in our fork** because the `uefi 0.30.0` crate (even without the
+/// `alloc` feature) provides its own `#[global_allocator]`, and Rust forbids
+/// two global allocators in the same binary (see E0152 for the related
+/// `panic_impl` case, but a similar restriction applies to
+/// `#[global_allocator]`). We let the UEFI crate's BootServices-backed
+/// allocator be the global one. This works because all `Box`/`Vec`/`String`
+/// allocations in our code happen during UEFI boot services (before
+/// `ExitBootServices`), which is exactly when the UEFI allocator is valid.
+#[cfg(any())]
 #[global_allocator]
 pub static mut HEAP: ListHeap<TOTAL_HEAP_SIZE> = ListHeap::new();
 
 /// Initializes the linked list heap.
+///
+/// No-op in our fork: the UEFI crate owns the global allocator. Kept as a
+/// stable symbol so `uefi/src/main.rs` can still call it.
 pub unsafe fn heap_init() {
-    HEAP.reset();
+    // HEAP.reset(); // disabled: HEAP is not the global allocator
 }
 
 /// A heap allocator based on a linked list of free chunks.
